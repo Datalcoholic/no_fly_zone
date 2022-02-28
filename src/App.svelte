@@ -1,8 +1,11 @@
 <script>
+	import Graph from './lib/graph.svelte';
 </script>
 
 <main>
-	<section class="container" />
+	<section class="container">
+		<Graph />
+	</section>
 </main>
 
 <style>
@@ -19,5 +22,10 @@
 		--font-color: hsl(212, 22%, 68%);
 
 		background: var(--base-color);
+	}
+
+	.container {
+		display: grid;
+		justify-content: center;
 	}
 </style>
