@@ -14,6 +14,7 @@
 			Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 
 		--base-color: hsl(227, 16%, 22%);
+		--base-color-2: hsl(227, 16%, 18%);
 		--base-rest-country-color: hsl(227, 16%, 42%);
 		--rusia-color: hsl(9, 64%, 50%);
 		--rusia-color-2: hsl(9, 64%, 35%);
