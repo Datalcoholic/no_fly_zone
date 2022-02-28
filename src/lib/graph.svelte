@@ -19,11 +19,23 @@
 	$: projection = d3.geoOrthographic().fitSize([width, height], world);
 	$: path = d3.geoPath(projection);
 
+	const fillScale = d3
+		.scaleOrdinal()
+		.domain(['UKR', 'RUS'])
+		.range([' hsl(40, 98%, 47%)', 'hsl(9, 64%, 50%)'])
+		.unknown('hsl(227, 16%, 42%)');
+	const strokeScale = d3
+		.scaleOrdinal()
+		.domain(['UKR', 'RUS'])
+		.range([' hsl(40, 98%, 35%)', 'hsl(9, 64%, 35%)'])
+		.unknown('hsl(227, 16%, 22%)');
 	// transform to features
 	$: features = world?.features.map((obj) => {
 		const { geometry, properties, _ } = obj;
 		const d = path(geometry);
-		return Object.assign({ ...properties }, { d });
+		const fill = fillScale(properties.iso3);
+		const stroke = strokeScale(properties.iso3);
+		return Object.assign({ ...properties }, { d, fill, stroke });
 	});
 
 	$: console.log('features', features);
@@ -34,7 +46,7 @@
 <svg {width} {height}>
 	{#if features}
 		{#each features as feature}
-			<path d={feature.d} />
+			<path d={feature.d} fill={feature.fill} stroke={feature.stroke} />
 		{/each}
 	{/if}
 </svg>
