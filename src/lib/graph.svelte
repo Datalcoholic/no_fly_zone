@@ -8,7 +8,6 @@
 	let height = 500;
 	$: height = height * 0.98;
 	let world;
-	$: console.log('world', world);
 	// Add topojsom
 	onMount(async () => {
 		const resp = await d3.json(
@@ -19,12 +18,25 @@
 
 	$: projection = d3.geoOrthographic().fitSize([width, height], world);
 	$: path = d3.geoPath(projection);
+
+	// transform to features
+	$: features = world?.features.map((obj) => {
+		const { geometry, properties, _ } = obj;
+		const d = path(geometry);
+		return Object.assign({ ...properties }, { d });
+	});
+
+	$: console.log('features', features);
 </script>
 
 <svelte:window bind:innerWidth={width} bind:innerHeight={height} />
 
 <svg {width} {height}>
-	<slot />
+	{#if features}
+		{#each features as feature}
+			<path d={feature.d} />
+		{/each}
+	{/if}
 </svg>
 
 <!-- markup (zero or more items) goes here -->
