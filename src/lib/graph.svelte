@@ -2,12 +2,17 @@
 	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
 	import * as topojson from 'topojson-client';
+	import Draggable from './draggable.svelte';
 
 	let width = 500;
 	$: width = width * 0.95;
 	let height = 500;
 	$: height = height * 0.98;
 	let world;
+	let x;
+	let y;
+	let projection;
+	let path;
 	// Add topojsom
 	onMount(async () => {
 		const resp = await d3.json(
@@ -15,10 +20,16 @@
 		);
 		world = await topojson.feature(resp, 'world-administrative-boundaries');
 	});
-
-	$: projection = d3.geoOrthographic().fitSize([width, height], world);
+	const sphere = { type: 'Sphere' };
+	$: projection = d3
+		.geoOrthographic()
+		.fitSize([width, height], world)
+		.scale([width / 3])
+		.rotate([-45, -65]);
+	const testScale = d3.scaleLinear().domain([0, 120]).range([-180, 180]);
 	$: path = d3.geoPath(projection);
-
+	//$: path = d3.geoPath(projection.rotate([(x / 180) * 8, (-y / 180) * 10]));
+	$: path = d3.geoPath(projection.rotate([testScale(x), -testScale(y)]));
 	const fillScale = d3
 		.scaleOrdinal()
 		.domain(['UKR', 'RUS'])
@@ -30,30 +41,42 @@
 		.range([' hsl(40, 98%, 35%)', 'hsl(9, 64%, 35%)'])
 		.unknown('hsl(227, 16%, 22%)');
 	// transform to features
-	$: features = world?.features.map((obj) => {
+	$: countries = world?.features.map((obj) => {
 		const { geometry, properties, _ } = obj;
-		const d = path(geometry);
+		//const d = path(geometry);
 		const fill = fillScale(properties.iso3);
 		const stroke = strokeScale(properties.iso3);
-		return Object.assign({ ...properties }, { d, fill, stroke });
+		const newProperties = Object.assign({ ...properties }, { fill, stroke });
+		return Object.assign({}, { geometry, properties: newProperties });
 	});
 
-	$: console.log('features', features);
+	//	$: console.log('features', features);
+	$: console.log('first', [[testScale(x), -testScale(y)]]);
 </script>
 
 <svelte:window bind:innerWidth={width} bind:innerHeight={height} />
 
 <svg {width} {height}>
-	{#if features}
-		{#each features as feature}
-			<path d={feature.d} fill={feature.fill} stroke={feature.stroke} />
-		{/each}
-	{/if}
+	<Draggable bind:mouseX={x} bind:mouseY={y}>
+		{#if countries}
+			<path class="sphere" d={path({ type: 'Sphere' })} />
+			{#each countries as country}
+				<path
+					d={path(country.geometry)}
+					fill={country.properties.fill}
+					stroke={country.properties.stroke}
+				/>
+			{/each}
+		{/if}
+	</Draggable>
 </svg>
 
 <!-- markup (zero or more items) goes here -->
 <style>
 	svg {
 		border: 1px solid tomato;
+	}
+	.sphere {
+		fill: var(--base-color-2);
 	}
 </style>
