@@ -30,6 +30,6 @@
 	on:mousemove|preventDefault={move}
 	on:mouseup|preventDefault={end}
 />
-<g class="draggable" on:mousedown={start}>
+<g class="draggable" on:mousedown|preventDefault|stopPropagation={start}>
 	<slot />
 </g>
