@@ -26,12 +26,10 @@
 	};
 </script>
 
-<svelte:window />
-<g
-	class="draggable"
-	on:mousedown={start}
+<svelte:window
 	on:mousemove|preventDefault={move}
 	on:mouseup|preventDefault={end}
->
+/>
+<g class="draggable" on:mousedown={start}>
 	<slot />
 </g>
