@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import * as d3 from 'd3';
 	import * as topojson from 'topojson-client';
 	import Draggable from './draggable.svelte';
@@ -22,7 +22,7 @@
 		world = await topojson.feature(resp, 'world-administrative-boundaries');
 	});
 
-	$: ROTATION = [x, y, 0];
+	$: ROTATION = [-x, y, 0];
 	$: projection = d3
 		.geoOrthographic()
 		.fitSize([width, height], world)
@@ -52,7 +52,7 @@
 	});
 
 	//	$: console.log('features', features);
-	$: console.log('first', ROTATION);
+	//$: console.log('first', ROTATION);
 </script>
 
 <svelte:window bind:innerWidth={width} bind:innerHeight={height} />
@@ -61,13 +61,19 @@
 	<Draggable bind:mouseX={x} bind:mouseY={y}>
 		{#if countries}
 			<path class="sphere" d={path({ type: 'Sphere' })} />
-			{#each countries as country}
-				<path
-					d={path(country.geometry)}
-					fill={country.properties.fill}
-					stroke={country.properties.stroke}
-				/>
-			{/each}
+			<g class="countries">
+				{#each countries as country}
+					<path
+						d={path(country.geometry)}
+						fill={country.properties.fill}
+						stroke={country.properties.stroke}
+						style="stroke-width:{country.properties.iso3 === 'UKR' ||
+						country.properties.iso3 === 'RUS'
+							? 1.5
+							: 0.3}px"
+					/>
+				{/each}
+			</g>
 		{/if}
 	</Draggable>
 </svg>
@@ -77,6 +83,7 @@
 	svg {
 		border: 1px solid tomato;
 	}
+
 	.sphere {
 		fill: var(--base-color-2);
 	}
