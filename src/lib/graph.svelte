@@ -13,6 +13,7 @@
 	let y;
 	let projection;
 	let path;
+	let ROTATION = [-45, -65, 0];
 	// Add topojsom
 	onMount(async () => {
 		const resp = await d3.json(
@@ -20,16 +21,16 @@
 		);
 		world = await topojson.feature(resp, 'world-administrative-boundaries');
 	});
-	const sphere = { type: 'Sphere' };
+
+	$: ROTATION = [x, y, 0];
 	$: projection = d3
 		.geoOrthographic()
 		.fitSize([width, height], world)
 		.scale([width / 3])
-		.rotate([-45, -65]);
-	const testScale = d3.scaleLinear().domain([0, 120]).range([-180, 180]);
+		.rotate(ROTATION);
+
 	$: path = d3.geoPath(projection);
-	//$: path = d3.geoPath(projection.rotate([(x / 180) * 8, (-y / 180) * 10]));
-	$: path = d3.geoPath(projection.rotate([testScale(x), -testScale(y)]));
+
 	const fillScale = d3
 		.scaleOrdinal()
 		.domain(['UKR', 'RUS'])
@@ -51,7 +52,7 @@
 	});
 
 	//	$: console.log('features', features);
-	$: console.log('first', [[testScale(x), -testScale(y)]]);
+	$: console.log('first', ROTATION);
 </script>
 
 <svelte:window bind:innerWidth={width} bind:innerHeight={height} />
