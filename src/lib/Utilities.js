@@ -51,3 +51,35 @@ export const isBan = (iso3) => {
 	if (oths) return 'non-eu';
 	return 'no-restricted';
 };
+
+export const addLabel = (iso3) => {
+	const toLabel = ['UKR', 'RUS', 'CAN', 'USA', 'GBR', 'ISL', 'DNK', 'FIN'];
+	return toLabel.find((d) => d === iso3);
+};
+
+export const changeName = (iso3) => {
+	const newNames = [
+		{ iso3: 'RUS', name: 'Rusia' },
+		{ iso3: 'USA', name: 'EE.UU' },
+		{ iso3: 'GBR', name: 'U.K' },
+	];
+
+	const label = newNames.find((d) => d.iso3 === iso3)?.name;
+
+	return label;
+};
+export const move = (iso3) => {
+	const newNames = [
+		{ iso3: 'RUS', translate: ['2%', '0%'] },
+		{ iso3: 'GBR', translate: ['-4%', '0%'] },
+		{ iso3: 'USA', translate: ['-3%', '4%'] },
+		{ iso3: 'CAN', translate: ['-2%', '-5%'] },
+		{ iso3: 'ISL', translate: ['0%', '4%'] },
+		{ iso3: 'UKR', translate: ['0%', '1%'] },
+	];
+
+	const move = newNames.find((d) => d.iso3 === iso3)?.translate;
+	if (move) return move.toString();
+
+	return '0%,0%';
+};
