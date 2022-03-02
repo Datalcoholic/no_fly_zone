@@ -3,7 +3,7 @@
 	import * as d3 from 'd3';
 	import * as topojson from 'topojson-client';
 	import Draggable from './draggable.svelte';
-	import { isBan } from './Utilities';
+	import { addLabel, changeName, isBan, move } from './Utilities';
 
 	let width = 500;
 	$: width = width * 0.95;
@@ -14,7 +14,7 @@
 	let y;
 	let projection;
 	let path;
-	let ROTATION = [-45, -65, 0];
+	let ROTATION = [35, -75, -20];
 
 	// Add topojsom
 	onMount(async () => {
@@ -24,11 +24,12 @@
 		world = await topojson.feature(resp, 'world-administrative-boundaries');
 	});
 
-	$: ROTATION = [-x, y, 0];
+	//$: ROTATION = [-x, y, 0];
 	$: projection = d3
 		.geoOrthographic()
 		.fitSize([width, height], world)
-		.scale([width / 3])
+		.scale([height / 2])
+		.translate([width / 2, height / 2])
 		.rotate(ROTATION);
 
 	$: path = d3.geoPath(projection);
@@ -47,14 +48,19 @@
 	$: countries = world?.features.map((obj) => {
 		const { geometry, properties, _ } = obj;
 		//const d = path(geometry);
-		const fill = fillScale(properties.iso3);
-		const stroke = strokeScale(properties.iso3);
-		const ban = isBan(properties.iso3);
+		const iso3 = properties.iso3;
+		const fill = fillScale(iso3);
+		const stroke = strokeScale(iso3);
+		const ban = isBan(iso3);
+		const newName = changeName(iso3);
+		const label = newName ? newName : properties.name;
+		const translate = move(iso3);
+
+		const centroid = path.centroid(geometry);
 		const newProperties = Object.assign(
 			{ ...properties },
-			{ fill, stroke, ban }
+			{ fill, stroke, ban, label, centroid, translate }
 		);
-
 		return Object.assign({}, { geometry, properties: newProperties });
 	});
 
@@ -97,15 +103,36 @@
 					/>
 				{/each}
 			</g>
+			<g class="labels">
+				{#each countries as country}
+					{#if addLabel(country.properties.iso3)}
+						<text
+							x={country.properties.centroid[0]}
+							y={country.properties.centroid[1]}
+							style="fill:{country.properties.iso3 === 'RUS' ||
+							country.properties.iso3 === 'UKR'
+								? country.properties.stroke
+								: 'hsl(192, 64%, 30%)'};
+								transform:translate({country.properties.translate})
+								
+								"
+						>
+							{country.properties.label}
+						</text>
+					{/if}
+				{/each}
+			</g>
+
+			<!-- content here -->
 		{/if}
 	</Draggable>
 </svg>
 
 <!-- markup (zero or more items) goes here -->
 <style>
-	svg {
+	/* svg {
 		border: 1px solid tomato;
-	}
+	} */
 
 	.sphere {
 		fill: var(--base-color-2);
@@ -118,6 +145,17 @@
 
 	.no-restricted {
 		fill-opacity: 0.25;
+	}
+
+	.labels {
+		text-anchor: middle;
+		font-size: 1.3rem;
+		font-weight: 400;
+		stroke: var(--base-color);
+		stroke-width: 2px;
+		paint-order: stroke;
+		stroke-linejoin: round;
+		stroke-linecap: round;
 	}
 
 	/* #pattern-rect {
