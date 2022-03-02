@@ -1,8 +1,9 @@
 <script>
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import * as d3 from 'd3';
 	import * as topojson from 'topojson-client';
 	import Draggable from './draggable.svelte';
+	import { isBan } from './Utilities';
 
 	let width = 500;
 	$: width = width * 0.95;
@@ -14,6 +15,7 @@
 	let projection;
 	let path;
 	let ROTATION = [-45, -65, 0];
+
 	// Add topojsom
 	onMount(async () => {
 		const resp = await d3.json(
@@ -47,23 +49,44 @@
 		//const d = path(geometry);
 		const fill = fillScale(properties.iso3);
 		const stroke = strokeScale(properties.iso3);
-		const newProperties = Object.assign({ ...properties }, { fill, stroke });
+		const ban = isBan(properties.iso3);
+		const newProperties = Object.assign(
+			{ ...properties },
+			{ fill, stroke, ban }
+		);
+
 		return Object.assign({}, { geometry, properties: newProperties });
 	});
 
-	//	$: console.log('features', features);
+	//$: countries?.forEach((d) => console.log(d.properties));
 	//$: console.log('first', ROTATION);
 </script>
 
 <svelte:window bind:innerWidth={width} bind:innerHeight={height} />
 
 <svg {width} {height}>
+	<!-- <defs>
+		<pattern
+			id="restricted"
+			viewBox="0 0 100 10 "
+			width="3%"
+			height="3%"
+			preserveAspectRatio="xMidYMin"
+		>
+			<rect id="pattern-rect" x={0} y={0} width={150} height={200} />
+			<circle id="pattern-circle" cx={50} cy={50} r={20} />
+		</pattern>
+	</defs> -->
 	<Draggable bind:mouseX={x} bind:mouseY={y}>
 		{#if countries}
 			<path class="sphere" d={path({ type: 'Sphere' })} />
 			<g class="countries">
 				{#each countries as country}
 					<path
+						class={country.properties.iso3 === 'UKR' ||
+						country.properties.iso3 === 'RUS'
+							? ''
+							: country.properties.ban}
 						d={path(country.geometry)}
 						fill={country.properties.fill}
 						stroke={country.properties.stroke}
@@ -87,4 +110,21 @@
 	.sphere {
 		fill: var(--base-color-2);
 	}
+
+	.non-eu,
+	.eu {
+		fill: var(--no-fly-color);
+	}
+
+	.no-restricted {
+		fill-opacity: 0.25;
+	}
+
+	/* #pattern-rect {
+		fill: var(--no-fly-color);
+	}
+
+	#pattern-circle {
+		fill: var(--no-fly-dark);
+	} */
 </style>
